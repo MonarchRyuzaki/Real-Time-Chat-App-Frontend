@@ -47,7 +47,7 @@ export function ChatList({ chats, selectedChat, onSelectChat, currentUser }: Cha
               <div className="flex items-center justify-between mt-1">
                 <p className="text-sm text-muted-foreground truncate">{chat.lastMessage}</p>
                 {chat.unreadCount > 0 && (
-                  <Badge className="bg-accent text-accent-foreground rounded-full h-5 min-w-5 flex items-center justify-center p-1 text-xs">
+                  <Badge className="bg-primary text-primary-foreground rounded-full h-5 min-w-5 flex items-center justify-center p-1 text-xs">
                     {chat.unreadCount}
                   </Badge>
                 )}

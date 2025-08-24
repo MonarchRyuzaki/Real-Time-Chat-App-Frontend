@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   SidebarProvider,
   Sidebar,
@@ -19,20 +19,50 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ChatList } from './chat-list';
 import { ChatMessages } from './chat-messages';
-import { chats, messages as allMessages, currentUser } from '@/lib/mock-data';
-import type { Chat } from '@/lib/types';
+import { chats, messages as allMessages } from '@/lib/mock-data';
+import type { Chat, User } from '@/lib/types';
 import { LogOut, MoreVertical, Search, Settings } from 'lucide-react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { logout, isAuthenticated, getCurrentUser } from '@/lib/auth';
 
 export function ChatLayout() {
   const [selectedChat, setSelectedChat] = useState<Chat | null>(chats[0] || null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const router = useRouter();
 
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push('/login');
+    } else {
+      const user = getCurrentUser();
+      if (user) {
+        // Construct user from stored info, create a placeholder avatar
+        setCurrentUser({ 
+          id: user.userId, 
+          name: user.username,
+          avatar: `https://placehold.co/100x100.png`
+        });
+      }
+    }
+  }, [router]);
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
+  
   const getOtherUser = (chat: Chat) => {
+    if (!currentUser) return null;
     return chat.users.find((user) => user.id !== currentUser.id);
   };
   
   const otherUser = selectedChat ? getOtherUser(selectedChat) : null;
   
+  if (!currentUser) {
+    // You can render a loading spinner here
+    return <div className="flex items-center justify-center h-full">Loading...</div>;
+  }
+
   return (
     <SidebarProvider>
       <Sidebar side="left" collapsible="icon" className="h-full">
@@ -43,16 +73,14 @@ export function ChatLayout() {
                 <AvatarImage src={currentUser.avatar} alt={currentUser.name} data-ai-hint="profile picture"/>
                 <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
               </Avatar>
-              <span className="text-lg font-semibold group-data-[collapsible=icon]:hidden">ChatWave</span>
+              <span className="text-lg font-semibold group-data-[collapsible=icon]:hidden">{currentUser.name}</span>
             </div>
             <div className="flex items-center gap-1 group-data-[collapsible=icon]:hidden">
                <Button variant="ghost" size="icon" className="h-8 w-8">
                   <Settings className="h-4 w-4" />
                </Button>
-               <Button asChild variant="ghost" size="icon" className="h-8 w-8">
-                <Link href="/">
+               <Button onClick={handleLogout} variant="ghost" size="icon" className="h-8 w-8">
                   <LogOut className="h-4 w-4" />
-                </Link>
                </Button>
             </div>
           </div>
