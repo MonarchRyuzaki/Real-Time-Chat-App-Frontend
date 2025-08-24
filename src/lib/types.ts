@@ -6,10 +6,10 @@ export type User = {
 
 export type Message = {
   id: string;
-  chatId: string;
-  sender: User;
-  text: string;
+  content: string; // Changed from 'text' to 'content'
+  senderId: string; // Changed from 'sender: User' to 'senderId: string'
   timestamp: string;
+  status?: "sending" | "sent" | "delivered" | "read"; // Added status field
 };
 
 export type Chat = {
