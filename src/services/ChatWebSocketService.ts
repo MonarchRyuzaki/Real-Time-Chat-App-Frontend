@@ -135,6 +135,7 @@ export class ChatWebSocketService {
       };
 
       ws.onmessage = (event) => {
+        console.log(event.data);
         this.handleIncomingMessage(event.data);
       };
 
@@ -263,8 +264,9 @@ export class ChatWebSocketService {
   }
 
   private handleMessage(message: MessageResponse) {
+    // Just create a new message from the server response
     const newMessage: Message = {
-      id: `${Date.now()}-${Math.random()}`, // Generate a unique ID
+      id: `${Date.now()}-${Math.random()}`,
       content: message.content,
       senderId:
         message.from === this.currentUser ? "currentUser" : message.from,
@@ -342,21 +344,21 @@ export class ChatWebSocketService {
       throw new Error("Chat WebSocket not connected");
     }
 
-    // Create optimistic message for immediate UI update
-    const optimisticMessage: Message = {
-      id: `temp-${Date.now()}-${Math.random()}`,
+    // Create message and mark it as sent immediately
+    const message: Message = {
+      id: `${Date.now()}-${Math.random()}`,
       content,
       senderId: "currentUser",
       timestamp: new Date().toISOString(),
-      status: "sending",
+      status: "sent", // Just mark as sent immediately
     };
 
-    // Add optimistic message to UI immediately
+    // Add message to UI immediately
     this.dispatch({
       type: "ADD_MESSAGE",
       payload: {
         chatId,
-        message: optimisticMessage,
+        message,
       },
     });
 

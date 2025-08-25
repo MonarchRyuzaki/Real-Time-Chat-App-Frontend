@@ -274,36 +274,29 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
 
     case "ADD_MESSAGE":
       const currentMessages = state.messages[action.payload.chatId] || [];
-      let newMessages = [...currentMessages];
-      let isDuplicate = false;
 
-      // If this is a server-confirmed message (has a real ID), check for optimistic duplicates
-      if (!action.payload.message.id.startsWith("temp-")) {
-        // Look for optimistic messages with same content and sender
-        const optimisticIndex = newMessages.findIndex(
-          (msg) =>
-            msg.id.startsWith("temp-") &&
-            msg.content === action.payload.message.content &&
-            msg.senderId === action.payload.message.senderId &&
-            Math.abs(
-              new Date(msg.timestamp).getTime() -
-                new Date(action.payload.message.timestamp).getTime()
-            ) < 5000 // Within 5 seconds
-        );
+      // Check if this exact message already exists (prevent duplicates)
+      const existingMessageIndex = currentMessages.findIndex(
+        (msg) => msg.id === action.payload.message.id
+      );
 
-        if (optimisticIndex >= 0) {
-          // Replace optimistic message with confirmed message
-          newMessages[optimisticIndex] = {
+      let newMessages;
+      if (existingMessageIndex >= 0) {
+        // Update existing message
+        newMessages = [...currentMessages];
+        newMessages[existingMessageIndex] = {
+          ...action.payload.message,
+          status: "sent" as const, // Always mark as sent
+        };
+      } else {
+        // Add new message
+        newMessages = [
+          ...currentMessages,
+          {
             ...action.payload.message,
-            status: "sent",
-          };
-          isDuplicate = true;
-        }
-      }
-
-      // If not a duplicate, add the new message
-      if (!isDuplicate) {
-        newMessages.push(action.payload.message);
+            status: "sent" as const, // Always mark as sent
+          },
+        ];
       }
 
       return {
@@ -316,7 +309,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
           ...state.unreadCounts,
           [action.payload.chatId]:
             state.selectedChat?.id !== action.payload.chatId &&
-            !action.payload.message.id.startsWith("temp-")
+            action.payload.message.senderId !== "currentUser"
               ? (state.unreadCounts[action.payload.chatId] || 0) + 1
               : state.unreadCounts[action.payload.chatId],
         },
@@ -331,7 +324,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
                 ).toLocaleString(),
                 unreadCount:
                   state.selectedChat?.id !== action.payload.chatId &&
-                  !action.payload.message.id.startsWith("temp-")
+                  action.payload.message.senderId !== "currentUser"
                     ? (chat.unreadCount || 0) + 1
                     : chat.unreadCount,
               }
