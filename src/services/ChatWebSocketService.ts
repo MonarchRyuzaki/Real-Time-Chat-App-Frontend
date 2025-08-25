@@ -65,6 +65,12 @@ interface SuccessResponse extends BaseMessage {
   msg: string;
 }
 
+interface StatusChangeMessage extends BaseMessage {
+  type: "STATUS_CHANGE";
+  username: string;
+  status: "ONLINE" | "OFFLINE";
+}
+
 type WebSocketMessage =
   | InitDataMessage
   | MessageResponse
@@ -72,7 +78,8 @@ type WebSocketMessage =
   | NewOneToOneChatApprovalResponse
   | ErrorResponse
   | InfoResponse
-  | SuccessResponse;
+  | SuccessResponse
+  | StatusChangeMessage;
 
 export class ChatWebSocketService {
   private chatWebSocket: WebSocket | null = null;
@@ -183,6 +190,7 @@ export class ChatWebSocketService {
       ws.onmessage = (event) => {
         // Handle presence-specific messages
         console.log("Presence server message:", event.data);
+        this.handlePresenceMessage(event.data);
       };
 
       ws.onclose = (event) => {
@@ -304,6 +312,21 @@ export class ChatWebSocketService {
           messages: formattedMessages,
         },
       });
+
+      // Update user status from history data
+      const otherUser =
+        message.messages[0].from === this.currentUser
+          ? message.messages[0].to
+          : message.messages[0].from;
+
+      this.dispatch({
+        type: "UPDATE_USER_STATUS_FROM_HISTORY",
+        payload: {
+          username: otherUser,
+          isOnline: message.isOnline,
+          lastSeenTime: message.lastSeenTime,
+        },
+      });
     }
 
     this.dispatch({ type: "SET_LOADING_HISTORY", payload: false });
@@ -336,6 +359,37 @@ export class ChatWebSocketService {
   ) {
     // You can implement toast notifications or status updates here
     console.log(`${message.type}: ${message.msg}`);
+  }
+
+  // Handle presence WebSocket messages
+  private handlePresenceMessage(data: string) {
+    try {
+      const message = JSON.parse(data);
+      console.log("Parsed presence message:", message);
+
+      if (message.type === "STATUS_CHANGE") {
+        const statusMessage = message as StatusChangeMessage;
+        this.dispatch({
+          type: "UPDATE_USER_STATUS",
+          payload: {
+            username: statusMessage.username,
+            isOnline: statusMessage.status === "ONLINE",
+            lastSeen:
+              statusMessage.status === "OFFLINE"
+                ? new Date().toISOString()
+                : undefined,
+            updatedAt: new Date().toISOString(),
+          },
+        });
+      }
+    } catch (error) {
+      console.error(
+        "Error parsing presence message:",
+        error,
+        "Raw data:",
+        data
+      );
+    }
   }
 
   // Send a message

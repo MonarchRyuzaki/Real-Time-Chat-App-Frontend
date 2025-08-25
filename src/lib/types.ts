@@ -2,7 +2,16 @@ export type User = {
   id: string;
   name: string;
   avatar: string;
+  isOnline?: boolean;
+  lastSeen?: string;
 };
+
+export interface UserStatus {
+  username: string;
+  isOnline: boolean;
+  lastSeen?: string;
+  updatedAt: string; // To track when this status was last updated
+}
 
 export type Message = {
   id: string;

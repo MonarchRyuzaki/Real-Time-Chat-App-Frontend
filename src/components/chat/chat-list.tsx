@@ -38,11 +38,21 @@ export function ChatList({
               "group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-12 group-data-[collapsible=icon]:h-12"
             )}
           >
-            <Avatar className="h-10 w-10 border">
-              <AvatarFallback>
-                {otherUser.name.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-10 w-10 border">
+                <AvatarFallback>
+                  {otherUser.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              {/* Online/Offline status indicator - show dot if we know the user's status */}
+              {otherUser.isOnline !== undefined && (
+                <div
+                  className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 border-2 border-white rounded-full ${
+                    otherUser.isOnline ? "bg-green-500" : "bg-gray-400"
+                  }`}
+                />
+              )}
+            </div>
             <div className="flex-1 truncate group-data-[collapsible=icon]:hidden">
               <div className="flex items-center justify-between">
                 <p className="font-semibold truncate">{otherUser.name}</p>

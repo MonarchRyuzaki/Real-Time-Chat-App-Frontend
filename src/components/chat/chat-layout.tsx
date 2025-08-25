@@ -311,9 +311,18 @@ export function ChatLayout() {
                   <div className="flex-1">
                     <h3 className="font-semibold">{otherUser.name}</h3>
                     <p className="text-sm text-muted-foreground">
-                      {state.presenceConnected
-                        ? "Online"
-                        : "Last seen recently"}
+                      {otherUser.isOnline ? (
+                        <span className="flex items-center gap-1">
+                          <div className="w-2 h-2 bg-green-500 rounded-full" />
+                          Online
+                        </span>
+                      ) : otherUser.lastSeen ? (
+                        `Last seen ${new Date(
+                          otherUser.lastSeen
+                        ).toLocaleString()}`
+                      ) : (
+                        "Last seen recently"
+                      )}
                     </p>
                   </div>
                   <Button variant="ghost" size="sm">

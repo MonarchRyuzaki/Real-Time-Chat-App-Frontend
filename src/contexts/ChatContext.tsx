@@ -1,6 +1,6 @@
 "use client";
 
-import type { Chat, Message, User } from "@/lib/types";
+import type { Chat, Message, User, UserStatus } from "@/lib/types";
 import React, {
   createContext,
   useCallback,
@@ -31,6 +31,9 @@ export interface ChatState {
   // Messages state - Changed from Map to object for React reactivity
   messages: Record<string, Message[]>; // Maps chat ID to messages
   unreadCounts: Record<string, number>; // Maps chat ID to unread count
+
+  // User status tracking
+  userStatuses: Record<string, UserStatus>; // Maps username to status
 
   // Force re-render mechanism
   messageUpdateKey: number; // Force re-render when messages change
@@ -77,6 +80,13 @@ export type ChatAction =
   | { type: "ADD_MESSAGE"; payload: { chatId: string; message: Message } }
   | { type: "MARK_MESSAGES_READ"; payload: string } // chatId
 
+  // User status actions
+  | { type: "UPDATE_USER_STATUS"; payload: UserStatus }
+  | {
+      type: "UPDATE_USER_STATUS_FROM_HISTORY";
+      payload: { username: string; isOnline: boolean; lastSeenTime?: string };
+    }
+
   // Init data action (from your WebSocket INIT_DATA message)
   | {
       type: "HANDLE_INIT_DATA";
@@ -117,6 +127,7 @@ const initialState: ChatState = {
   chatIds: [],
   messages: {},
   unreadCounts: {},
+  userStatuses: {},
   messageUpdateKey: 0,
   isLoadingHistory: false,
   offlineMessages: [],
@@ -414,6 +425,98 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
       return {
         ...state,
         offlineMessages: action.payload,
+      };
+
+    case "UPDATE_USER_STATUS":
+      return {
+        ...state,
+        userStatuses: {
+          ...state.userStatuses,
+          [action.payload.username]: action.payload,
+        },
+        // Update the user status in chats as well
+        chats: state.chats.map((chat) => ({
+          ...chat,
+          users: chat.users.map((user) =>
+            user.name === action.payload.username
+              ? {
+                  ...user,
+                  isOnline: action.payload.isOnline,
+                  lastSeen: action.payload.lastSeen,
+                }
+              : user
+          ),
+        })),
+        selectedChat: state.selectedChat
+          ? {
+              ...state.selectedChat,
+              users: state.selectedChat.users.map((user) =>
+                user.name === action.payload.username
+                  ? {
+                      ...user,
+                      isOnline: action.payload.isOnline,
+                      lastSeen: action.payload.lastSeen,
+                    }
+                  : user
+              ),
+            }
+          : null,
+      };
+
+    case "UPDATE_USER_STATUS_FROM_HISTORY":
+      const existingStatus = state.userStatuses[action.payload.username];
+      const historyTimestamp =
+        action.payload.lastSeenTime || new Date().toISOString();
+
+      // Only update if we don't have existing status or the history is newer
+      const shouldUpdate =
+        !existingStatus ||
+        new Date(historyTimestamp) > new Date(existingStatus.updatedAt);
+
+      if (!shouldUpdate) {
+        return state;
+      }
+
+      const newStatus: UserStatus = {
+        username: action.payload.username,
+        isOnline: action.payload.isOnline,
+        lastSeen: action.payload.lastSeenTime,
+        updatedAt: historyTimestamp,
+      };
+
+      return {
+        ...state,
+        userStatuses: {
+          ...state.userStatuses,
+          [action.payload.username]: newStatus,
+        },
+        // Update the user status in chats as well
+        chats: state.chats.map((chat) => ({
+          ...chat,
+          users: chat.users.map((user) =>
+            user.name === action.payload.username
+              ? {
+                  ...user,
+                  isOnline: action.payload.isOnline,
+                  lastSeen: action.payload.lastSeenTime,
+                }
+              : user
+          ),
+        })),
+        selectedChat: state.selectedChat
+          ? {
+              ...state.selectedChat,
+              users: state.selectedChat.users.map((user) =>
+                user.name === action.payload.username
+                  ? {
+                      ...user,
+                      isOnline: action.payload.isOnline,
+                      lastSeen: action.payload.lastSeenTime,
+                    }
+                  : user
+              ),
+            }
+          : null,
       };
 
     default:
