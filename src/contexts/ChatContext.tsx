@@ -368,7 +368,7 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
                   avatar: `https://placehold.co/100x100.png`, // Default avatar
                 },
               ],
-              lastMessage: "No messages yet",
+              lastMessage: "",
               lastMessageTimestamp: "",
               unreadCount: 0,
             };

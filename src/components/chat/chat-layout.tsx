@@ -187,12 +187,8 @@ export function ChatLayout() {
           <SidebarHeader>
             <div className="flex items-center gap-2 px-4 py-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage
-                  src={state.currentUser.avatar}
-                  alt={state.currentUser.name}
-                />
                 <AvatarFallback>
-                  {state.currentUser.name.charAt(0)}
+                  {state.currentUser.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div className="relative group-data-[collapsible=icon]:hidden">
@@ -308,8 +304,9 @@ export function ChatLayout() {
                 <div className="border-b p-4 flex items-center gap-3">
                   <SidebarTrigger className="md:hidden" />
                   <Avatar>
-                    <AvatarImage src={otherUser.avatar} alt={otherUser.name} />
-                    <AvatarFallback>{otherUser.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>
+                      {otherUser.name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <h3 className="font-semibold">{otherUser.name}</h3>

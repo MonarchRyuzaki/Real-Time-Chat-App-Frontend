@@ -72,17 +72,6 @@ export function ChatMessages({
             </div>
           )}
 
-          {messages.length === 0 && !isLoading && (
-            <div className="flex justify-center text-muted-foreground">
-              <div className="text-center">
-                <div className="text-4xl mb-2">💬</div>
-                <p className="text-sm">
-                  No messages yet. Start the conversation!
-                </p>
-              </div>
-            </div>
-          )}
-
           {messages.map((message) => {
             const isCurrentUser =
               message.senderId === "currentUser" ||
@@ -102,13 +91,8 @@ export function ChatMessages({
               >
                 {!isCurrentUser && displayUser && (
                   <Avatar className="h-8 w-8">
-                    <AvatarImage
-                      src={displayUser.avatar}
-                      alt={displayUser.name}
-                      data-ai-hint="profile picture"
-                    />
                     <AvatarFallback>
-                      {displayUser.name.charAt(0)}
+                      {displayUser.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 )}
@@ -156,13 +140,8 @@ export function ChatMessages({
                 </div>
                 {isCurrentUser && (
                   <Avatar className="h-8 w-8">
-                    <AvatarImage
-                      src={currentUser.avatar}
-                      alt={currentUser.name}
-                      data-ai-hint="profile picture"
-                    />
                     <AvatarFallback>
-                      {currentUser.name.charAt(0)}
+                      {currentUser.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                 )}
